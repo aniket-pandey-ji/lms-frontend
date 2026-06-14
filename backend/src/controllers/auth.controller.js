@@ -1,0 +1,6 @@
+import crypto from 'crypto';import { User } from '../models/User.js';import { signAccessToken, signRefreshToken } from '../utils/tokens.js';
+const cookie={httpOnly:true,sameSite:'strict',secure:process.env.NODE_ENV==='production'};
+export async function register(req,res,next){try{const user=await User.create({...req.body,emailVerificationToken:crypto.randomBytes(24).toString('hex')});res.status(201).json({user:{id:user.id,name:user.name,email:user.email,role:user.role},accessToken:signAccessToken(user)});}catch(e){next(e)}}
+export async function login(req,res,next){try{const user=await User.findOne({email:req.body.email}).select('+password');if(!user||!(await user.verifyPassword(req.body.password)))return res.status(401).json({message:'Invalid credentials'});const refreshToken=signRefreshToken(user);user.refreshTokenHash=crypto.createHash('sha256').update(refreshToken).digest('hex');await user.save();res.cookie('refreshToken',refreshToken,{...cookie,path:'/api/v1/auth/refresh'}).json({user:{id:user.id,name:user.name,email:user.email,role:user.role},accessToken:signAccessToken(user)});}catch(e){next(e)}}
+export async function me(req,res){res.json({user:req.user});}
+export async function logout(req,res){res.clearCookie('refreshToken');res.status(204).end();}

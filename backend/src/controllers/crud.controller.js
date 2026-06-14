@@ -1,0 +1,4 @@
+import { Community, Resource, Post, StudyGroup, CodingContest } from '../models/Core.js';
+const models={communities:Community,resources:Resource,posts:Post,studyGroups:StudyGroup,contests:CodingContest};
+export const list=(name)=>async(req,res,next)=>{try{const page=Math.max(Number(req.query.page)||1,1),limit=Math.min(Number(req.query.limit)||20,100);const q={deletedAt:null};if(req.query.search)q.$text={$search:req.query.search};const [items,total]=await Promise.all([models[name].find(q).sort(req.query.sort||'-createdAt').skip((page-1)*limit).limit(limit),models[name].countDocuments(q)]);res.json({items,total,page,limit});}catch(e){next(e)}};
+export const create=(name)=>async(req,res,next)=>{try{res.status(201).json(await models[name].create({...req.body,createdBy:req.user.id}));}catch(e){next(e)}};

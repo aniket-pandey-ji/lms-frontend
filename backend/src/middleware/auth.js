@@ -1,0 +1,3 @@
+import jwt from 'jsonwebtoken';import { User } from '../models/User.js';
+export async function authenticate(req,res,next){try{const token=req.headers.authorization?.replace('Bearer ','')||req.cookies.accessToken;if(!token)return res.status(401).json({message:'Authentication required'});const payload=jwt.verify(token,process.env.JWT_ACCESS_SECRET||'dev-access');req.user=await User.findById(payload.sub);if(!req.user||req.user.deletedAt)return res.status(401).json({message:'Invalid session'});next();}catch(e){next(e)}}
+export const authorize=(...roles)=>(req,res,next)=>roles.includes(req.user?.role)?next():res.status(403).json({message:'Forbidden'});
