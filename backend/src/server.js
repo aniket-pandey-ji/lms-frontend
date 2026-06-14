@@ -1,0 +1,10 @@
+import http from 'http';
+import { createApp } from './app.js';
+import { connectDatabase } from './config/database.js';
+import { attachSockets } from './sockets/index.js';
+const port = process.env.PORT || 8080;
+const app = createApp();
+const server = http.createServer(app);
+attachSockets(server);
+if (process.env.NODE_ENV !== 'test') await connectDatabase();
+server.listen(port, () => console.log(`Student Hub API listening on ${port}`));
